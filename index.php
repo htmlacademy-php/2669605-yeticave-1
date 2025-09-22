@@ -9,40 +9,46 @@ $advertisement = [
     [
         'name' => '2014 Rossignol District Snowboard',
         'categories' => $categories[0],
-        'cost' => '10999',
+        'cost' => 1099.5,
         'image' => 'img/lot-1.jpg'
     ],
     [
         'name' => 'DC Ply Mens 2016/2017 Snowboard',
         'categories' => $categories[0],
-        'cost' => '10999',
+        'cost' => 159999,
         'image' => 'img/lot-2.jpg'
     ],
     [
         'name' => 'Крепления Union Contact Pro 2015 года размер L/XL',
         'categories' => $categories[1],
-        'cost' => '10999',
+        'cost' => 8000.67,
         'image' => 'img/lot-3.jpg'
     ],
     [
         'name' => 'Ботинки для сноуборда DC Mutiny Charocal',
         'categories' => $categories[2],
-        'cost' => '10999',
+        'cost' => 10999,
         'image' => 'img/lot-4.jpg'
     ],
     [
         'name' => 'Куртка для сноуборда DC Mutiny Charocal',
         'categories' => $categories[3],
-        'cost' => '10999',
+        'cost' => 7500.6,
         'image' => 'img/lot-5.jpg'
     ],
     [
         'name' => 'Маска Oakley Canopy',
         'categories' => $categories[5],
-        'cost' => '10999',
+        'cost' => 5400,
         'image' => 'img/lot-6.jpg'
     ]
-]
+];
+
+function priceFormat(float $price): string
+{
+    $rounded = ceil($price);
+    return number_format($rounded, 0, '', ' ') . ' ₽';
+}
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -119,8 +125,8 @@ $advertisement = [
                             <h3 class="lot__title"><a class="text-link" href="pages/lot.html"><?= $ad['name']; ?></a></h3>
                             <div class="lot__state">
                                 <div class="lot__rate">
-                                    <span class="lot__amount"><?=$ad['name'];?></span>
-                                    <span class="lot__cost"><?= number_format($ad['cost'],0,'',' ')?><b class="rub">р</b></span>
+                                    <span class="lot__amount">Ставок: </span>
+                                    <span class="lot__cost"><?= priceFormat($ad['cost'])?></span>
                                 </div>
                                 <div class="lot__timer timer">
                                     12:23
