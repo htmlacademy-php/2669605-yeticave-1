@@ -34,11 +34,14 @@
                                     <span class="lot__cost"><?= priceFormat((float)$ad['cost']) ?></span>
                                 <?php endif; ?>
                             </div>
-                            <div class="lot__timer timer">
-                                12:23
+                            <?php $time_left = get_dt_range($ad["date"]); ?>
+                            <div class="lot__timer timer <?= $time_left['hours'] <= 1 ? ' timer--finishing' : '' ?>">
+                                <?= str_pad(
+                                    $time_left['hours'], 2, '0', STR_PAD_LEFT)
+                                . ':'
+                                . str_pad($time_left['minutes'], 2, '0', STR_PAD_LEFT) ?>
                             </div>
                         </div>
-                    </div>
                 </li>
             <?php endforeach; ?>
         </ul>
