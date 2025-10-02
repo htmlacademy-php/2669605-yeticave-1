@@ -22,9 +22,7 @@ CREATE TABLE users
   email       VARCHAR(255) NOT NULL UNIQUE,
   name        VARCHAR(255) NOT NULL,
   password    VARCHAR(255) NOT NULL,
-  contact     VARCHAR(255),
-  lot_id      INT          NULL,
-  wager_id    INT          NULL
+  contact     VARCHAR(255)
 );
 
 # таблица лотов
