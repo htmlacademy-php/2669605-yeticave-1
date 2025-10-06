@@ -1,107 +1,102 @@
 <?php
 require_once 'helpers.php';
 
-date_default_timezone_set("Europe/Moscow");
-
-$is_auth = rand(0, 1);
-
-$user_name = 'Сергей';
-
-$title = 'YetiCave';
-
-$categories = [
-    'Доски и лыжи',
-    'Крепления',
-    'Ботинки',
-    'Одежда',
-    'Инструменты',
-    'Разное'
-];
-
-$advertisement = [
-    [
-        'name' => '2014 Rossignol District Snowboard',
-        'categories' => $categories[0],
-        'cost' => 1099.5,
-        'image' => 'img/lot-1.jpg',
-        'date' => '2025-09-30'
-    ],
-    [
-        'name' => 'DC Ply Mens 2016/2017 Snowboard',
-        'categories' => $categories[0],
-        'cost' => 159999,
-        'image' => 'img/lot-2.jpg',
-        'date' => '2025-10-30'
-    ],
-    [
-        'name' => 'Крепления Union Contact Pro 2015 года размер L/XL',
-        'categories' => $categories[1],
-        'cost' => 8000.67,
-        'image' => 'img/lot-3.jpg',
-        'date' => '2025-09-28'
-    ],
-    [
-        'name' => 'Ботинки для сноуборда DC Mutiny Charocal',
-        'categories' => $categories[2],
-        'cost' => 10999,
-        'image' => 'img/lot-4.jpg',
-        'date' => '2025-09-28'
-    ],
-    [
-        'name' => 'Куртка для сноуборда DC Mutiny Charocal',
-        'categories' => $categories[3],
-        'cost' => 7500.6,
-        'image' => 'img/lot-5.jpg',
-        'date' => '2025-12-01'
-    ],
-    [
-        'name' => 'Маска Oakley Canopy',
-        'categories' => $categories[5],
-        'cost' => 5400,
-        'image' => 'img/lot-6.jpg',
-        'date' => '2025-11-02'
-    ]
-];
-
-function priceFormat(float $price): string
-{
-    $rounded = ceil($price);
-    return number_format($rounded, 0, '', ' ') . ' ₽';
+// Подключение к базе данных
+try {
+$con = mysqli_connect('mysql', 'root', 'root', 'yeti_cave_db');
+} catch (Exception $e) {
+    die('Ошибка подключения: ' . $e->getMessage());
 }
 
-function get_dt_range(string $date): array
-{
-    try {
-        $date1 = new DateTime();
-        $date2 = new DateTime($date);
+// Установка кодировки
+mysqli_set_charset($con, 'utf8');
+
+// Запрос на получение активных лотов
+$sql_lots = '
+    SELECT
+        l.date_create,
+        l.name AS lot_name,
+        l.description,
+        l.image,
+        l.initial_price,
+        l.completion_date,
+        c.name AS category_name,
+        c.code AS category_code
+    FROM lots l
+    JOIN categories c ON l.category_id = c.id
+    WHERE l.completion_date > NOW()
+    ORDER BY l.date_create ASC
+';
+
+// Запрос на получение категорий
+$sql_categories = 'SELECT * FROM categories';
+
+// Выполнение запросов
+try {
+    $res_lots = mysqli_query($con, $sql_lots);
+} catch (Exception $e) {
+    die('Ошибка выполнения запроса на получения лотов: ' . mysqli_error($con));
+}
+
+try {
+    $res_categories = mysqli_query($con, $sql_categories);
     } catch (Exception $e) {
-        return ['hours' => 0, 'minutes' => 0];
+        die('Ошибка выполнения запроса на получения категорий: ' . mysqli_error($con));
+}
+
+// Получение данных
+    $lots = mysqli_fetch_all($res_lots, MYSQLI_ASSOC);
+    $categories = mysqli_fetch_all($res_categories, MYSQLI_ASSOC);
+
+// Закрытие соединения
+    mysqli_close($con);
+
+// Установка часового пояса
+    date_default_timezone_set("Europe/Moscow");
+
+    $is_auth = rand(0, 1);
+    $user_name = 'Сергей';
+    $title = 'YetiCave';
+
+    function priceFormat(float $price): string
+    {
+        $rounded = ceil($price);
+        return number_format($rounded, 0, '', ' ') . ' ₽';
     }
 
-    // Получаем разницу между датами
-    $interval = date_diff($date1, $date2);
-    // Общее количество часов
-    $hours = $interval->days * 24 + $interval->h;
-    // Общее количество минут
-    $minutes = $interval->i;
+    function get_dt_range(string $date): array
+    {
+        try {
+            $date1 = new DateTime();
+            $date2 = new DateTime($date);
+        } catch (Exception $e) {
+            return ['hours' => 0, 'minutes' => 0];
+        }
 
-    return [
-        'hours' => $hours,
-        'minutes' => $minutes
-    ];
-}
+        // Получаем разницу между датами
+        $interval = date_diff($date1, $date2);
+        // Общее количество часов
+        $hours = $interval->days * 24 + $interval->h;
+        // Общее количество минут
+        $minutes = $interval->i;
 
-$main = include_template('main.php', [
-    'advertisement' => $advertisement,
-    'categories' => $categories,
-]);
+        return [
+            'hours' => $hours,
+            'minutes' => $minutes
+        ];
+    }
 
-$page_content = include_template('layout.php', [
-    'main' => $main,
-    'categories' => $categories,
-    'user_name' => $user_name,
-    'is_auth' => $is_auth,
-    'title' => $title
-]);
+    $main = include_template('main.php', [
+        'advertisement' => $lots,
+        'categories' => $categories,
+    ]);
 
-print($page_content);
+    $page_content = include_template('layout.php', [
+        'main' => $main,
+        'categories' => $categories,
+        'user_name' => $user_name,
+        'is_auth' => $is_auth,
+        'title' => $title
+    ]);
+
+    print($page_content);

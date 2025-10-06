@@ -6,8 +6,8 @@
         <ul class="promo__list">
             <!--заполните этот список из массива категорий-->
             <?php foreach ($categories as $category) : ?>
-                <li class="promo__item promo__item--boards">
-                    <a class="promo__link" href="pages/all-lots.html"><?= $category ?></a>
+                <li class="promo__item promo__item--<?= $category['code'] ?>">
+                    <a class="promo__link" href="pages/all-lots.html"><?= $category['name'] ?></a>
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -24,17 +24,17 @@
                         <img src="<?= htmlspecialchars($ad['image']) ?>" width="350" height="260" alt="">
                     </div>
                     <div class="lot__info">
-                        <span class="lot__category"><?= htmlspecialchars($ad['categories']); ?></span>
+                        <span class="lot__category"><?= htmlspecialchars($ad['category_name']); ?></span>
                         <h3 class="lot__title"><a class="text-link"
-                                                  href="pages/lot.html"><?= htmlspecialchars($ad['name']); ?></a></h3>
+                                                  href="pages/lot.html"><?= htmlspecialchars($ad['lot_name']); ?></a></h3>
                         <div class="lot__state">
                             <div class="lot__rate">
                                 <span class="lot__amount">Ставок: </span>
-                                <?php if (isset($ad['cost'])) : ?>
-                                    <span class="lot__cost"><?= priceFormat((float)$ad['cost']) ?></span>
+                                <?php if (isset($ad['initial_price'])) : ?>
+                                    <span class="lot__cost"><?= priceFormat((float)$ad['initial_price']) ?></span>
                                 <?php endif; ?>
                             </div>
-                            <?php $time_left = get_dt_range($ad["date"]); ?>
+                            <?php $time_left = get_dt_range($ad["completion_date"]); ?>
                             <div class="lot__timer timer <?= $time_left['hours'] <= 1 ? ' timer--finishing' : '' ?>">
                                 <?= str_pad(
                                     $time_left['hours'], 2, '0', STR_PAD_LEFT)
