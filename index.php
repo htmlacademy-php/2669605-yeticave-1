@@ -1,102 +1,62 @@
 <?php
-require_once 'helpers.php';
+$base_dir = __DIR__;
+require_once realpath($base_dir . '/helpers.php') ?: die('Файл helpers.php не найден');
+require_once realpath($base_dir . '/db.php') ?: die('Файл db.php не найден');
+require_once realpath($base_dir . '/functions.php') ?: die('Файл functions.php не найден');
+require_once realpath($base_dir . '/queries.php') ?: die('Файл queries.php не найден');
 
-// Подключение к базе данных
-try {
-$con = mysqli_connect('mysql', 'root', 'root', 'yeti_cave_db');
-} catch (Exception $e) {
-    die('Ошибка подключения: ' . $e->getMessage());
-}
-
-// Установка кодировки
-mysqli_set_charset($con, 'utf8');
-
-// Запрос на получение активных лотов
-$sql_lots = '
-    SELECT
-        l.date_create,
-        l.name AS lot_name,
-        l.description,
-        l.image,
-        l.initial_price,
-        l.completion_date,
-        c.name AS category_name,
-        c.code AS category_code
-    FROM lots l
-    JOIN categories c ON l.category_id = c.id
-    WHERE l.completion_date > NOW()
-    ORDER BY l.date_create ASC
-';
-
-// Запрос на получение категорий
-$sql_categories = 'SELECT * FROM categories';
-
-// Выполнение запросов
-try {
-    $res_lots = mysqli_query($con, $sql_lots);
-} catch (Exception $e) {
-    die('Ошибка выполнения запроса на получения лотов: ' . mysqli_error($con));
-}
-
-try {
-    $res_categories = mysqli_query($con, $sql_categories);
-    } catch (Exception $e) {
-        die('Ошибка выполнения запроса на получения категорий: ' . mysqli_error($con));
-}
-
-// Получение данных
-    $lots = mysqli_fetch_all($res_lots, MYSQLI_ASSOC);
-    $categories = mysqli_fetch_all($res_categories, MYSQLI_ASSOC);
-
-// Закрытие соединения
-    mysqli_close($con);
+$db_con = connect();
 
 // Установка часового пояса
-    date_default_timezone_set("Europe/Moscow");
+date_default_timezone_set("Europe/Moscow");
 
-    $is_auth = rand(0, 1);
-    $user_name = 'Сергей';
-    $title = 'YetiCave';
+$is_auth = rand(0, 1);
+$user_name = 'Сергей';
+$title = 'YetiCave';
 
-    function priceFormat(float $price): string
-    {
-        $rounded = ceil($price);
-        return number_format($rounded, 0, '', ' ') . ' ₽';
-    }
-
-    function get_dt_range(string $date): array
-    {
-        try {
-            $date1 = new DateTime();
-            $date2 = new DateTime($date);
-        } catch (Exception $e) {
-            return ['hours' => 0, 'minutes' => 0];
+$source = $_GET['source'] ?? null;
+switch ($source) {
+    case 'lot':
+        // Получение id лота из GET запроса и проверка на корректность типа и значения id
+        $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if (!$id) {
+            http_response_code(404);
+            $page_content = include_template('404.php');
+            print($page_content);
+            exit;
         }
 
-        // Получаем разницу между датами
-        $interval = date_diff($date1, $date2);
-        // Общее количество часов
-        $hours = $interval->days * 24 + $interval->h;
-        // Общее количество минут
-        $minutes = $interval->i;
+        $categories = getCategories($db_con);
+        $lot = getLotById($db_con, $id);
+        if(!$lot){
+            http_response_code(404);
+            $page_content = include_template('404.php');
+            print($page_content);
+            exit;
+        }
 
-        return [
-            'hours' => $hours,
-            'minutes' => $minutes
-        ];
-    }
+        $pageLot = include_template('lot.php', [
+            'lot' => $lot
+        ]);
 
-    $main = include_template('main.php', [
-        'advertisement' => $lots,
-        'categories' => $categories,
-    ]);
+        break;
 
-    $page_content = include_template('layout.php', [
-        'main' => $main,
-        'categories' => $categories,
-        'user_name' => $user_name,
-        'is_auth' => $is_auth,
-        'title' => $title
-    ]);
+    default:
+        $lots = getActiveLots($db_con);
+        $categories = getCategories($db_con);
+        $main = include_template('main.php', [
+            'advertisement' => $lots,
+            'categories' => $categories,
+        ]);
+}
 
-    print($page_content);
+$page_content = include_template('layout.php', [
+    'main' => $main ?? '',
+    'pageLot' => $pageLot ?? '',
+    'categories' => $categories ?? [],
+    'user_name' => $user_name,
+    'is_auth' => $is_auth,
+    'title' => $title
+]);
+
+print($page_content);
